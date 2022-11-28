@@ -11,17 +11,18 @@ import 'models.dart';
 
 
 
+
 void main() async{
 
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
- runApp(const ProviderScope(child: MyApp()));
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends ConsumerWidget{
-    const MyApp({Key? key}) : super(key:  key);
+  const MyApp({Key? key}) : super(key:  key);
 
 
 
@@ -80,77 +81,36 @@ class MyHomePage extends ConsumerWidget {
                   loading: () => const CircularProgressIndicator(),
                   error: (err, stack) => Text('Error:$err'),
                    data:(books) {
-
-
-                    if (bookModel.genre.contains('${genre.state}')) {
-                      final docs = books.docs;
-                      return SizedBox(
-                          height: 500,
-                          child: ListView.builder(
-                              itemCount: docs.length,
-                              itemBuilder: (context, index) {
-                                final doc = docs[index].data() as Map<String, dynamic>;
-                                return
-                                  ListTile(
-                                    title: Text(
-                                      '${doc['title']} - ${doc['author']}',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold),), subtitle: Text('${doc['content']}'),);
-
-                              })
-                      );
-                    }
-
-
-
-                             if (bookModel.title.contains(filter.state) ||
-                                 bookModel.genre.contains(filter.state) ||
-                                 bookModel.content.contains(filter.state) ||
-                                 bookModel.author.contains(filter.state)) {
-                               final docs = bookRef.where(books,isEqualTo: filter.state);
-                               return SizedBox(
-                                   height: 500,
-                                   child: ListView.builder(
-                                       itemCount: docs.length,
-                                       itemBuilder: (context, index) {
-                                         final doc = docs[index].data() as Map<String, dynamic>;
-                                         return
-                                           ListTile(
-                                             title: Text(
-                                               '${doc['title']} - ${doc['author']}',
-                                               style: const TextStyle(
-                                                   fontWeight: FontWeight
-                                                       .bold),),
-                                             subtitle: Text(
-                                                 '${doc['content']}'),);
-                                       }
-                                   )
-                               );
-                             }
-
-
                      final docs = books.docs;
                      return SizedBox(
                          height: 500,
                          child: ListView.builder(
                              itemCount: docs.length,
                              itemBuilder: (context, index) {
-                               final doc = docs[index].data() as Map<String, dynamic>;
-                               return
-                                 ListTile(
-                                   title: Text(
-                                     '${doc['title']} - ${doc['author']}',
-                                     style: const TextStyle(
-                                         fontWeight: FontWeight.bold),),
-                                   subtitle: Text('${doc['content']}'),);
+                               return BookTile(bookModel: docs[index].data());
                              }
-                             )
+                             ),
                      );
                   });
 
               })
         ],
       )
+    );
+  }
+}
+
+class BookTile extends StatelessWidget {
+  const BookTile({Key? key,required this.bookModel}) : super(key: key);
+
+  final Book bookModel;
+
+  @override
+Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(
+    '${bookModel.title} - ${bookModel.author}',style: const TextStyle(fontWeight: FontWeight.bold),),
+      subtitle: Text(bookModel.content),
     );
   }
 }
