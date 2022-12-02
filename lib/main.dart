@@ -1,5 +1,4 @@
 
-
 import 'package:book/providers.dart';
 import 'package:book/search.dart';
 import 'package:flutter/material.dart';
@@ -25,7 +24,6 @@ class MyApp extends ConsumerWidget{
   const MyApp({Key? key}) : super(key:  key);
 
 
-
   @override
   Widget build(BuildContext context, WidgetRef ref){
 
@@ -34,29 +32,20 @@ class MyApp extends ConsumerWidget{
       theme: ThemeData(
           primarySwatch: Colors.green
       ),
-      home: MyHomePage(bookModel: Book(title: '', author: '', content: '' ,genre: ''),),
+      home: MyHomePage()
     );
   }
 }
 
 
 
-
 class MyHomePage extends ConsumerWidget {
 
-  MyHomePage({Key? key, required this.bookModel}) : super(key:  key);
+  const MyHomePage({Key? key}) : super(key:  key);
 
-  final CollectionReference<Book> bookRef = FirebaseFirestore.instance.collection('books')
-      .withConverter<Book>(
-    fromFirestore: (snapshots, _) => Book.fromJson(snapshots.data()!),
-    toFirestore: (book, _) => book.toJson(),
-  );
-
-  final Book bookModel;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-
+  Widget build(BuildContext context,WidgetRef ref) {
 
     return Scaffold(
       appBar: AppBar(
@@ -66,34 +55,46 @@ class MyHomePage extends ConsumerWidget {
           Text('蔵書一覧')
         ],),
         actions: [
-          IconButton(onPressed: ()=>Navigator.of(context).push(MaterialPageRoute(builder: (context){return search();})), icon: Icon(Icons.search_outlined))
+          IconButton(onPressed: ()=>Navigator.of(context).push(MaterialPageRoute(builder: (context){return const search();})), icon: const Icon(Icons.search_outlined))
         ],
       ),
-      body: Column(
-        children: [
-          Consumer(
-              builder: (context, ref, child){
-                AsyncValue<QuerySnapshot> booksDocs = ref.watch(booksStream);
-                final filter = ref.watch(filterProvider.state);
-                final genre = ref.watch(genreProvider.state);
+        body: Column(
+          children: [
+            Consumer(
+                builder: (context, ref, child){
+                  AsyncValue<QuerySnapshot<Book>> booksDocs  = ref.watch(booksStream);
+                  final filter = ref.watch(filterProvider.state);
 
-                return booksDocs.when(
+                  return booksDocs.when(
                   loading: () => const CircularProgressIndicator(),
-                  error: (err, stack) => Text('Error:$err'),
-                   data:(books) {
-                     final docs = books.docs;
-                     return SizedBox(
-                         height: 500,
-                         child: ListView.builder(
-                             itemCount: docs.length,
-                             itemBuilder: (context, index) {
-                               return BookTile(bookModel: docs[index].data());
-                             }
-                             ),
-                     );
-                  });
+                      error: (err, stack) => Text('Error:$err'),
+                      data:(books) {
+                        if(filter.state.isNotEmpty){
+                          final docs = books.docs.where((element) => element.data().author.contains(filter.state) || element.data().content.contains(filter.state) || element.data().author.contains(filter.state)).toList() ;
 
-              })
+                          return SizedBox(
+                            height: 500,
+                            child: ListView.builder(
+                                itemCount: docs.length,
+                                itemBuilder: (context, index) {
+                                  return BookTile(bookModel: docs[index].data());
+                                }
+                            ),
+                          );
+                        }
+
+                        final docs = books.docs;
+                        return SizedBox(
+                          height: 500,
+                          child: ListView.builder(
+                              itemCount: docs.length,
+                              itemBuilder: (context, index) {
+                                return BookTile(bookModel: docs[index].data());
+                              }
+                          ),
+                        );
+                      });
+                })
         ],
       )
     );
